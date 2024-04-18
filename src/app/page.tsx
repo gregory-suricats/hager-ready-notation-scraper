@@ -21,7 +21,7 @@ export default function Home() {
     if (textArea) {
       const textAreaValue = textArea.value;
       setLoading(true);
-      fetch('/api/getData', {
+      fetch(window.location.origin + '/api/getData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
