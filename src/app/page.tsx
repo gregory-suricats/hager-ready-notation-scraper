@@ -1,95 +1,101 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+import styles from './page.module.css';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 export default function Home() {
+  const [url, setUrl] = useState(
+    'https://apps.microsoft.com/detail/9p4nxl0dfvf4?hl=en-us&gl='
+  );
+  const [tableData, setTableData] = useState<
+    { country: string; notation: number }[]
+  >([]);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  let [loading, setLoading] = useState(false);
+  let [color, setColor] = useState('#ffffff');
+
+  const handleSubmit = () => {
+    const textArea = document.querySelector('textarea');
+    if (textArea) {
+      const textAreaValue = textArea.value;
+      setLoading(true);
+      fetch('/api/getData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countries: textAreaValue, url: url }),
+      })
+        .then((response) => response.json())
+        .then(({ data }) => {
+          console.log('Received data:', data);
+          setTableData(data);
+          setLoading(false);
+        })
+        .catch((error) => setErrorMessage(error.message));
+    }
+  };
+
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+      <h1>Hager Ready Notation Scraper</h1>
+      <legend>
+        Enter here the url of the app without the country code (ex:
+        https://apps.microsoft.com/detail/9p4nxl0dfvf4?hl=en-us&gl=)
+      </legend>
+      <input
+        type="text"
+        className={styles.textArea}
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+      ></input>
+      <legend>
+        Enter here the list of countries separated by commas (ex: nl, fr, es,
+        pt)
+      </legend>
+      <textarea className={styles.textArea}></textarea>
+      <button
+        className={styles.submitButton}
+        onClick={handleSubmit}
+        disabled={loading}
+      >
+        Submit
+      </button>
+      <ClipLoader
+        color={color}
+        loading={loading}
+        size={30}
+        aria-label="Loading Spinner"
+        data-testid="loader"
+      />
+      {tableData.length > 0 && (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Notation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableData.map((data, index) => (
+              <tr key={index}>
+                <td>{data.country}</td>
+                <td>
+                  {data.notation !== undefined
+                    ? data.notation
+                    : 'No notation found'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      {errorMessage && (
+        <div style={{ color: 'red', marginTop: '20px' }}>{errorMessage}</div>
+      )}
     </main>
   );
 }
